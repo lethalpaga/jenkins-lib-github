@@ -1,4 +1,4 @@
-@Library('github@test') _
+@Library('github') _
 
 pipeline {
   agent any
@@ -25,6 +25,11 @@ pipeline {
                                             "success",
                                             "http://localhost:8080",
                                             "Deployment started")
+
+              github.createDeploymentStatus(deployment_url,
+                                            "success",
+                                            "http://localhost:8080",
+                                            "Deployment successful")
             }
           }
         }
