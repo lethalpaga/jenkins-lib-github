@@ -45,18 +45,36 @@ private githubApiRepoUrl() {
 // @params Hash containing the parameter as per https://developer.github.com/v3/repos/deployments/#create-a-deployment
 def createDeployment(Map payload) {
   def response = sendPayload("${githubApiRepoUrl()}/deployments", payload)
-  echo "response is ${response['url'].inspect()}"
   return response['url']
 }
 
 // Send a new deployement status
-// @param url Base url to the deployment as return by createDeployment)
+// @param url Base url to the deployment as returned by createDeployment)
 // @param payload Status parameters map as per https://developer.github.com/v3/repos/deployments/#create-a-deployment-status     
 def createDeploymentStatus(url, Map payload){
-  def rev = getGitCommit()
-  echo "Updating status of ${url} with ${payload}"
+  echo "Updating deployment status of ${url} with ${payload}"
   
   def response = sendPayload("${url}/statuses", payload)
   return response['url']
 }
 
+// Creates a new Status
+// @param payload Status payload as per https://developer.github.com/v3/repos/statuses/#create-a-status
+def createStatus(String sha, Map payload) {
+  def url = "${githubApiRepoUrl()}/statuses/${sha}"
+  echo "Updating status of ${url} with ${payload}"
+
+  def response = sendPayload(url, payload)
+  return response['url']
+}
+
+// Create a new issue comment. This also work for global comments on PR
+// @param issueNumber ID of the issue or PR
+// @param payload Payload as per https://developer.github.com/v3/pulls/comments/#create-a-comment
+def createIssueComment(issueNumber, Map payload) {
+  def url = "${githubApiRepoUrl()}/issues/${issueNumber}/comments"
+  echo "Creating comment on ${url} with ${payload}"
+
+  def response = sendPayload(url, payload)
+  return response['url']
+}
