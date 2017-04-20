@@ -1,0 +1,42 @@
+Access the Github API. This is an unopiniated library that does not
+do anything implicitly.
+
+<h1> Authentication </h1>
+The first step is to add your Github credentials. Make sure you fetch them
+in a secure way (using withCredentials for example).
+
+<code>
+githubApi.setUser("myuser")
+githubApi.setPassword("mypassword")
+</code>
+
+<h1> Github URL </h1>
+Configure the github URL to point to the root of your github api.
+For public Github that would be
+<code>
+githubApi.setUrl("https://api.github.com")
+</code>
+
+For Github Enterprise it usually looks like (depending on how it's set up):
+<code>
+githubApi.setUrl("https://<github url>/api/v3")
+</code>
+
+<h1> Send deployment statuses </h1>
+<code>
+def deployment_url = githubApi.createDeployment([
+              ref: github.getGitCommit(),
+              task: "deploy",
+              environment: "test",
+              transient_environment: true,
+              required_contexts: []
+            ])
+
+github.createDeploymentStatus(deployment_url, 
+            [
+              state: "success",
+              log_url: "https://mylog.mycompany.com",
+              description: "Deployment successful!",
+            ])
+</code>
+
