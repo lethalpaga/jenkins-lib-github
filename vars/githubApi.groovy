@@ -1,7 +1,29 @@
 import groovy.json.JsonOutput
 
+// Sends an HTTP query to github
+def sendPayload(url, payload, method = "POST") {
+  writeFile file: 'payload.json', text: groovy.json.JsonOutput.toJson(payload)
+  sh """
+  set +x
+  curl -f -X ${method} -u '${githubUser}:${githubPassword}' '${url}' -d @payload.json \
+              -H 'X-GitHub-Media-Type: application/vnd.github.ant-man-preview+json' > response.json
+  set -x
+  """
+  readJSON file: 'response.json'
+}
+
+// Get the HEAD git commit
+// See also getPullRequestHead to reliably get the last commit of a PR
 def getGitCommit() {
   sh(returnStdout:true, script: "git rev-parse HEAD").trim()
+}
+
+// Returns the latest SHA of a PR
+// This can be useful when building merge PRs
+// as the HEAD commit won't exist outside of jenkins
+def getPullRequestHead(pr_number) {
+  def pr = sendPayload("${githubApiRepoUrl()}/pulls/${pr_number}", "", "GET")
+  pr["head"]["sha"]
 }
 
 def setUrl(url) {
@@ -24,23 +46,11 @@ def setRepo(repo) {
   githubRepo = repo
 }
 
-// Sends an HTTP query to github
-def sendPayload(url, payload) {
-  writeFile file: 'payload.json', text: groovy.json.JsonOutput.toJson(payload)
-  sh """
-  set +x
-  curl -f -X POST -u '${githubUser}:${githubPassword}' '${url}' -d @payload.json \
-              -H 'X-GitHub-Media-Type: application/vnd.github.ant-man-preview+json' > response.json
-  set -x
-  """
-  readJSON file: 'response.json'
-}
-
 // Returns the Repos base endpoint
 private githubApiRepoUrl() {
   "${githubUrl}/repos/${githubOrg}/${githubRepo}"
 }
-  
+
 // Create a new deployement
 // @params Hash containing the parameter as per https://developer.github.com/v3/repos/deployments/#create-a-deployment
 def createDeployment(Map payload) {
@@ -53,7 +63,7 @@ def createDeployment(Map payload) {
 // @param payload Status parameters map as per https://developer.github.com/v3/repos/deployments/#create-a-deployment-status     
 def createDeploymentStatus(url, Map payload){
   echo "Updating deployment status of ${url} with ${payload}"
-  
+
   def response = sendPayload("${url}/statuses", payload)
   return response['url']
 }
