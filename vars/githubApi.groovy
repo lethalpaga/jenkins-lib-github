@@ -21,9 +21,14 @@ def getGitCommit() {
 // Returns the latest SHA of a PR
 // This can be useful when building merge PRs
 // as the HEAD commit won't exist outside of jenkins
-def getPullRequestHead(pr_number) {
+def getPullRequestSha(pr_number) {
   def pr = sendPayload("${githubApiRepoUrl()}/pulls/${pr_number}", "", "GET")
   pr["head"]["sha"]
+}
+
+def getBranchSha(branch_name) {
+  def pr = sendPayload("${githubApiRepoUrl()}/branches/${branch_name}", "", "GET")
+  pr["commit"]["sha"]
 }
 
 def setUrl(url) {
